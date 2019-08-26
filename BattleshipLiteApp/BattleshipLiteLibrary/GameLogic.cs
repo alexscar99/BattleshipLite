@@ -2,8 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BattleshipLiteLibrary
 {
@@ -50,28 +48,28 @@ namespace BattleshipLiteLibrary
             model.ShotGrid.Add(spot);
         }
 
-        public static bool PlayerStillActive(PlayerInfoModel opponent)
+        public static bool PlayerStillActive(PlayerInfoModel player)
         {
-            int sunkCount = 0;
+            bool isActive = false;
 
-            foreach (var ship in opponent.ShipLocations)
+            foreach (var ship in player.ShipLocations)
             {
-                if (ship.Status == GridSpotStatus.Sunk)
+                if (ship.Status != GridSpotStatus.Sunk)
                 {
-                    sunkCount++;
+                    isActive = true;
                 }
             }
 
-            return (sunkCount < 5) ? true : false;
+            return isActive;
         }
 
-        public static int GetShotCount(PlayerInfoModel winner)
+        public static int GetShotCount(PlayerInfoModel player)
         {
             int shotCount = 0;
 
-            foreach (var spot in winner.ShotGrid)
+            foreach (var shot in player.ShotGrid)
             {
-                if (spot.Status == GridSpotStatus.Hit || spot.Status == GridSpotStatus.Miss)
+                if (shot.Status != GridSpotStatus.Empty)
                 {
                     shotCount++;
                 }
@@ -86,22 +84,21 @@ namespace BattleshipLiteLibrary
 
             foreach (var shipLocation in model.ShipLocations)
             {
-                if (shipLocation.SpotLetter == row && shipLocation.SpotNumber == column)
+                if (IsMatchingRowAndColumn(shipLocation, row, column))
                 {
                     return false;
                 }
             }
 
-            GridSpotModel ship = new GridSpotModel
-            {
-                SpotLetter = row,
-                SpotNumber = column,
-                Status = GridSpotStatus.Ship
-            };
-
             if (ValidateShot(model, row, column))
             {
-                model.ShipLocations.Add(ship);
+                model.ShipLocations.Add(new GridSpotModel
+                {
+                    SpotLetter = row,
+                    SpotNumber = column,
+                    Status = GridSpotStatus.Ship
+                });
+
                 return true;
             }
 
@@ -112,20 +109,20 @@ namespace BattleshipLiteLibrary
         {
             if (shot.Length != 2)
             {
-                return ("", 0);
+                throw new ArgumentException("Location is out of the bounds of the grid.");
             }
 
             return (shot.Substring(0, 1), Convert.ToInt32(shot.Substring(1)));
         }
 
-        public static bool ValidateShot(PlayerInfoModel activePlayer, string row, int column)
+        public static bool ValidateShot(PlayerInfoModel player, string row, int column)
         {
             var validRows = new List<string> { "a", "b", "c", "d", "e" };
             bool isValidRow = validRows.Contains(row, StringComparer.OrdinalIgnoreCase);
             bool isValidColumn = column > 0 && column < 6;
             bool isValidShot = false;
 
-            foreach (var gridSpot in activePlayer.ShotGrid)
+            foreach (var gridSpot in player.ShotGrid)
             {
                 if (isValidRow && isValidColumn)
                 {
@@ -153,9 +150,9 @@ namespace BattleshipLiteLibrary
             return false;
         }
 
-        public static void MarkShotResult(PlayerInfoModel activePlayer, string row, int column, bool isAHit)
+        public static void MarkShotResult(PlayerInfoModel player, string row, int column, bool isAHit)
         {
-            foreach (var spot in activePlayer.ShotGrid)
+            foreach (var spot in player.ShotGrid)
             {
                 if (IsMatchingRowAndColumn(spot, row, column))
                 {

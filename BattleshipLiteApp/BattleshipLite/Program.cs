@@ -1,10 +1,6 @@
 ﻿using BattleshipLiteLibrary;
 using BattleshipLiteLibrary.Models;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BattleshipLite
 {
@@ -57,14 +53,21 @@ namespace BattleshipLite
 
             do
             {
-                Console.WriteLine();
                 string shot = AskForShot(activePlayer.UsersName);
-                (row, column) = GameLogic.SplitShotIntoRowAndColumn(shot);
-                isValidShot = GameLogic.ValidateShot(activePlayer, row, column);
+
+                try
+                {
+                    (row, column) = GameLogic.SplitShotIntoRowAndColumn(shot);
+                    isValidShot = GameLogic.ValidateShot(activePlayer, row, column);
+                }
+                catch (Exception)
+                {
+                    isValidShot = false;
+                }
 
                 if (!isValidShot)
                 {
-                    Console.WriteLine("Invalid shot location or you already guessed this location. Please try again.");
+                    Console.WriteLine("Invalid shot location. Please try again.");
                 }
 
             } while (!isValidShot);
@@ -72,14 +75,30 @@ namespace BattleshipLite
             bool isAHit = GameLogic.IdentifyShotResult(opponent, row, column);
 
             GameLogic.MarkShotResult(activePlayer, row, column, isAHit);
+
+            DisplayShotResults(row, column, isAHit);
         }
 
-        private static string AskForShot(string activePlayerName)
+        private static void DisplayShotResults(string row, int column, bool isAHit)
         {
+            if (isAHit)
+            {
+                Console.WriteLine($"{ row }{ column } is a hit!");
+
+            }
+            else
+            {
+                Console.WriteLine($"{ row }{ column } is a miss.");
+
+            }
+
             Console.WriteLine();
-            Console.Write($"{ activePlayerName }, enter your shot selection: ");
+        }
+
+        private static string AskForShot(string playerName)
+        {
+            Console.Write($"{ playerName }, please enter your shot selection: ");
             string output = Console.ReadLine();
-            Console.WriteLine();
 
             return output;
         }
@@ -102,16 +121,19 @@ namespace BattleshipLite
                         Console.Write($" { gridSpot.SpotLetter }{ gridSpot.SpotNumber } ");
                         break;
                     case GridSpotStatus.Miss:
-                        Console.Write(" O ");
+                        Console.Write(" O  ");
                         break;
                     case GridSpotStatus.Hit:
-                        Console.Write(" X ");
+                        Console.Write(" X  ");
                         break;
                     default:
-                        Console.Write(" ? ");
+                        Console.Write(" ?  ");
                         break;
                 }
             }
+
+            Console.WriteLine();
+            Console.WriteLine();
         }
 
         private static void WelcomeMessage()
@@ -157,7 +179,16 @@ namespace BattleshipLite
                 Console.Write($"Where do you want to place ship number { model.ShipLocations.Count + 1 }: ");
                 string location = Console.ReadLine();
 
-                bool isValidLocation = GameLogic.PlaceShip(model, location);
+                bool isValidLocation = false;
+
+                try
+                {
+                    isValidLocation = GameLogic.PlaceShip(model, location);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error: { ex.Message }");
+                }
 
                 if (!isValidLocation)
                 {
