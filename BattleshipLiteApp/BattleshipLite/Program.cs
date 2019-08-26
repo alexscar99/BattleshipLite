@@ -96,21 +96,20 @@ namespace BattleshipLite
                     currentRow = gridSpot.SpotLetter;
                 }
 
-                if (gridSpot.Status == GridSpotStatus.Empty)
+                switch (gridSpot.Status)
                 {
-                    Console.Write($" { gridSpot.SpotLetter }{ gridSpot.SpotNumber } ");
-                }
-                else if (gridSpot.Status == GridSpotStatus.Hit)
-                {
-                    Console.Write(" X ");
-                }
-                else if (gridSpot.Status == GridSpotStatus.Miss)
-                {
-                    Console.Write(" O ");
-                }
-                else
-                {
-                    Console.Write(" ? ");
+                    case GridSpotStatus.Empty:
+                        Console.Write($" { gridSpot.SpotLetter }{ gridSpot.SpotNumber } ");
+                        break;
+                    case GridSpotStatus.Miss:
+                        Console.Write(" O ");
+                        break;
+                    case GridSpotStatus.Hit:
+                        Console.Write(" X ");
+                        break;
+                    default:
+                        Console.Write(" ? ");
+                        break;
                 }
             }
         }
