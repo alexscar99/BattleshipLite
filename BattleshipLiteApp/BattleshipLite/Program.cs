@@ -64,7 +64,7 @@ namespace BattleshipLite
 
                 if (!isValidShot)
                 {
-                    Console.WriteLine("Invalid shot location. Please try again.");
+                    Console.WriteLine("Invalid shot location or you already guessed this location. Please try again.");
                 }
 
             } while (!isValidShot);
