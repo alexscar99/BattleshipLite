@@ -14,10 +14,105 @@ namespace BattleshipLite
         {
             WelcomeMessage();
 
-            PlayerInfoModel player1 = CreatePlayer("Player 1");
-            PlayerInfoModel player2 = CreatePlayer("Player 2");
+            PlayerInfoModel activePlayer = CreatePlayer("Player 1");
+            PlayerInfoModel opponent = CreatePlayer("Player 2");
+            PlayerInfoModel winner = null;
+
+            do
+            {
+                DisplayShotGrid(activePlayer);
+
+                RecordPlayerShot(activePlayer, opponent);
+
+                bool doesGameContinue = GameLogic.PlayerStillActive(opponent);
+
+                if (doesGameContinue)
+                {
+                    // Swap positions using tuple
+                    (activePlayer, opponent) = (opponent, activePlayer);
+                }
+                else
+                {
+                    winner = activePlayer;
+                }
+                
+            } while (winner == null);
+
+            IdentifyWinner(winner);
 
             Console.ReadLine();
+        }
+
+        private static void IdentifyWinner(PlayerInfoModel winner)
+        {
+            Console.WriteLine($"Congratulations to { winner.UsersName } for winning!");
+            Console.WriteLine($"{ winner.UsersName } took { GameLogic.GetShotCount(winner) } shots to sink all 5 battleships!");
+        }
+
+        private static void RecordPlayerShot(PlayerInfoModel activePlayer, PlayerInfoModel opponent)
+        {
+            bool isValidShot = false;
+            string row = "";
+            int column = 0;
+
+            do
+            {
+                Console.WriteLine();
+                string shot = AskForShot(activePlayer.UsersName);
+                (row, column) = GameLogic.SplitShotIntoRowAndColumn(shot);
+                isValidShot = GameLogic.ValidateShot(activePlayer, row, column);
+
+                if (!isValidShot)
+                {
+                    Console.WriteLine("Invalid shot location. Please try again.");
+                }
+
+            } while (!isValidShot);
+
+            bool isAHit = GameLogic.IdentifyShotResult(opponent, row, column);
+
+            GameLogic.MarkShotResult(activePlayer, row, column, isAHit);
+        }
+
+        private static string AskForShot(string activePlayerName)
+        {
+            Console.WriteLine();
+            Console.Write($"{ activePlayerName }, enter your shot selection: ");
+            string output = Console.ReadLine();
+            Console.WriteLine();
+
+            return output;
+        }
+
+        private static void DisplayShotGrid(PlayerInfoModel activePlayer)
+        {
+            string currentRow = activePlayer.ShotGrid[0].SpotLetter;
+
+            foreach (var gridSpot in activePlayer.ShotGrid)
+            {
+                if (gridSpot.SpotLetter != currentRow)
+                {
+                    Console.WriteLine();
+                    currentRow = gridSpot.SpotLetter;
+                }
+
+                if (gridSpot.Status == GridSpotStatus.Empty)
+                {
+                    Console.Write($" { gridSpot.SpotLetter }{ gridSpot.SpotNumber } ");
+                }
+                else if (gridSpot.Status == GridSpotStatus.Hit)
+                {
+                    Console.Write(" X ");
+                }
+                else if (gridSpot.Status == GridSpotStatus.Miss)
+                {
+                    Console.Write(" O ");
+                }
+                else
+                {
+                    Console.Write(" ? ");
+                }
+            }
         }
 
         private static void WelcomeMessage()
@@ -25,24 +120,24 @@ namespace BattleshipLite
             Console.WriteLine("Welcome to Battleship Lite");
             Console.WriteLine("created by Alex Scarlett");
             Console.WriteLine();
+            Console.WriteLine("This is a miniature version of the popular game Battleship, with a 25 spot grid");
+            Console.WriteLine("Rows: A-E, Columns: 1-5");
+            Console.WriteLine("'X' marks a hit/sunk ship, 'O' marks a miss");
+            Console.WriteLine("TIP: When entering a location (placing ships or firing), enter the row followed by the column (A1, B3, etc.)");
+            Console.WriteLine();
         }
 
         private static PlayerInfoModel CreatePlayer(string playerTitle)
         {
             PlayerInfoModel output = new PlayerInfoModel();
-
             Console.WriteLine($"Player information for { playerTitle }");
 
-            // Ask the user for their name
             output.UsersName = AskForUsersName();
 
-            // Load up the shot grid
             GameLogic.InitializeGrid(output);
 
-            // Ask the user for their 5 ship placements
             PlaceShips(output);
 
-            // Clear screen
             Console.Clear();
 
             return output;
@@ -65,10 +160,11 @@ namespace BattleshipLite
 
                 bool isValidLocation = GameLogic.PlaceShip(model, location);
 
-                if (isValidLocation == false)
+                if (!isValidLocation)
                 {
                     Console.WriteLine("That was not a valid location. Please try again.");
                 }
+
             } while (model.ShipLocations.Count < 5);
         }
     }
